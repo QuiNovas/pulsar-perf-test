@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Install docker
-#yum install docker
+yum install docker
 
 # Whether or not to append a timestamp to each message before sending to attempt uniqueness
 UNIQ_MESSAGES=true
@@ -22,7 +22,7 @@ DELAY=1
 #Image to use
 IMAGE="bashism/pulsar-test:latest"
 
-docker pull ${IMAGE}
+sudo docker pull ${IMAGE}
 
 sudo docker run -ti --rm \
   -e UNIQ_MESSAGES=${UNIQ_MESSAGES} \

@@ -9,10 +9,11 @@ RUN apt update && \
     apt autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
-COPY ./producer.py /app/producer.py
+COPY ./PulsarTest.py /app/PulsarTest.py
+COPY ./main.py /app/main.py
 
 RUN chmod +x /app/*
 
 WORKDIR /app
 
-CMD /app/producer.py
+CMD /app/main.py

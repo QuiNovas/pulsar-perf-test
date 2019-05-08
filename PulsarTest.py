@@ -102,10 +102,10 @@ class PulsarTest(object):
             self.uniq = False
 
         # If we didn't define a subscription name then generate a UUID
-        if "subscription" in config:
+        if "subscription" in config and config["subscription"]:
             self.subscription = config["subscription"]
         else:
-            self.subcription = ""
+            self.subcription = False
 
         if (self.runTime and self.messageCount) or (self.runForever and self.messageCount) or (not self.runTime and not self.messageCount and not self.runForever):
             print("[Config Error] Exactly one of either RUN_TIME or MESSAGE_COUNT is required")
@@ -122,7 +122,10 @@ class PulsarTest(object):
                     Pulsar url: {self.url}
                     message size: {messageSize}
                     uniq messages: {uniq}
-                    run time = {runtime}
+                    run time: {runtime}
+                    subscription name: {subscription}
+                    consumer type: {consumerType}
+                    verbosity: {verbosity}
             ##################################################
             """.format(
                     delay=self.delay,
@@ -132,7 +135,10 @@ class PulsarTest(object):
                     url=self.url,
                     messageSize=str(self.messageSize/1000) + "KB",
                     uniq=str(self.uniq),
-                    runtime=str(self.runTime)
+                    runtime=str(self.runTime),
+                    subscription=str(self.subscription),
+                    consumerType=self.consumerType,
+                    verbosity=self.verbosity
                 )
         print(banner)
 
@@ -144,15 +150,11 @@ class PulsarTest(object):
     def produceByTime(self):
         try:
             client = pulsar.Client(self.url,
-                use_tls=True,
-                tls_allow_insecure_connection=True,
-            )
+                                use_tls=True,
+                                tls_allow_insecure_connection=True,
+                            )
 
-            producer = client.create_producer(self.topic,
-                block_if_queue_full=True,
-                batching_enabled=True,
-                batching_max_publish_delay_ms=10
-            )
+            producer = client.create_producer(self.topic)
         except Exception as e:
             print(e)
             raise SystemExit
@@ -172,7 +174,7 @@ class PulsarTest(object):
             else:
                 msgToSend = msg
             try:
-                s = producer.send_async(msgToSend.encode('utf-8'), None)
+                s = producer.send(msgToSend.encode('utf-8'))
             except Exception as e:
                 print("Failed to send message: %s", e)
             if self.delay:
@@ -187,15 +189,11 @@ class PulsarTest(object):
         msg = self.genMsg()
 
         client = pulsar.Client(self.url,
-            use_tls=True,
-            tls_allow_insecure_connection=True,
-        )
+                            use_tls=True,
+                            tls_allow_insecure_connection=True,
+                        )
 
-        producer = client.create_producer(self.topic,
-            block_if_queue_full=True,
-            batching_enabled=True,
-            batching_max_publish_delay_ms=10
-        )
+        producer = client.create_producer(self.topic)
 
         for i in range(self.messageCount):
             if self.uniq:
@@ -203,11 +201,10 @@ class PulsarTest(object):
             else:
                 msgToSend = msg
             try:
-                s = producer.send_async(msgToSend.encode('utf-8'), None)
+                s = producer.send(msgToSend.encode('utf-8'))
                 print(s)
             except Exception as e:
                 print("Failed to send message: %s", e)
-
             if self.delay:
                 time.sleep(self.delay/1000)
         producer.flush()
@@ -221,19 +218,22 @@ class PulsarTest(object):
         print("Starting consumeByTime(" + str(self.runTime) +") at " + str(startTime))
 
         client = pulsar.Client(self.url,
-            use_tls=True,
-            tls_allow_insecure_connection=True,
-        )
+                            use_tls=True,
+                            tls_allow_insecure_connection=True,
+                        )
 
         if not self.subscription:
             print("No subscription defined. Generating one with UUID")
-            consumer = client.subscribe(self.topic, str(uuid.uuid1()) + "-" + str(time.time()))
+            consumer = client.subscribe(self.topic,
+                                str(uuid.uuid4()),
+                                consumer_type=self.consumerType
+                            )
         else:
             print("Using subscription " + self.subscription)
             consumer = client.subscribe(self.topic,
-                        self.subscription,
-                        consumer_type=self.consumerType
-                    )
+                                self.subscription,
+                                consumer_type=self.consumerType
+                            )
 
         if self.runForever:
             print("Running FOREVER!!!!")
@@ -262,15 +262,20 @@ class PulsarTest(object):
         startTime = time.time()
 
         client = pulsar.Client(self.url,
-            use_tls=True,
-            tls_allow_insecure_connection=True,
-            consumer_type=self.consumerType
-        )
+                            use_tls=True,
+                            tls_allow_insecure_connection=True,
+                        )
 
         if not self.subscription:
-            consumer = client.subscribe(self.topic, str(uuid.uuid1()) + "-" + str(time.time()))
+            consumer = client.subscribe(self.topic,
+                                str(uuid.uuid4()),
+                                consumer_type=self.consumerType
+                            )
         else:
-            consumer = client.subscribe(self.topic, self.subscription)
+            consumer = client.subscribe(self.topic,
+                                self.subscription,
+                                consumer_type=self.consumerType
+                            )
 
         for i in range(self.messageCount):
             try:

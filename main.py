@@ -29,8 +29,11 @@ if "CONSUMER_TYPE" in os.environ:
     config["consumerType"] = os.environ["CONSUMER_TYPE"]
 if "VERBOSITY" in os.environ:
     config["verbosity"] = os.environ["VERBOSITY"]
+if "TOPIC_FROM_TOPIC" in os.environ and os.environ["TOPIC_FROM_TOPIC"]:
+    config["topicFromTopic"] = os.environ["TOPIC_FROM_TOPIC"]
+if "AUTH_TOKEN" in os.environ and os.environ["AUTH_TOKEN"]:
+    config["authToken"] = os.environ["AUTH_TOKEN"]
 
-print(config)
 p = PulsarTest.PulsarTest(config)
 
 if "ROLE" in os.environ and (os.environ["ROLE"] == "producer" or os.environ["ROLE"] == "consumer"):

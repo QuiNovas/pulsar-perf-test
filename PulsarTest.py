@@ -22,6 +22,8 @@ class PulsarTest(object):
     subscription = str()
     consumerType = str()
     verbosity = int()
+    topicFromTopic = bool()
+    authToken = str()
 
     def __init__(self, config):
 
@@ -101,15 +103,26 @@ class PulsarTest(object):
         else:
             self.uniq = False
 
+        if "topicFromTopic" in config:
+            self.topicFromTopic = str(uuid.uuid4())
+        else:
+            self.topicFromTopic = False
+
         # If we didn't define a subscription name then generate a UUID
         if "subscription" in config and config["subscription"]:
             self.subscription = config["subscription"]
         else:
             self.subcription = False
 
+        if "authToken" in config and config["authToken"]:
+            self.authToken = pulsar.AuthenticationToken(config["authToken"])
+        else:
+            self.authToken = None
+
         if (self.runTime and self.messageCount) or (self.runForever and self.messageCount) or (not self.runTime and not self.messageCount and not self.runForever):
             print("[Config Error] Exactly one of either RUN_TIME or MESSAGE_COUNT is required")
             raise SystemExit
+
 
     def banner(self):
         banner = """
@@ -126,6 +139,8 @@ class PulsarTest(object):
                     subscription name: {subscription}
                     consumer type: {consumerType}
                     verbosity: {verbosity}
+                    generate random topic: {topicFromTopic}
+                    authToken : {token}
             ##################################################
             """.format(
                     delay=self.delay,
@@ -138,7 +153,9 @@ class PulsarTest(object):
                     runtime=str(self.runTime),
                     subscription=str(self.subscription),
                     consumerType=self.consumerType,
-                    verbosity=self.verbosity
+                    verbosity=self.verbosity,
+                    topicFromTopic=str(bool(self.topicFromTopic)),
+                    token=self.authToken
                 )
         print(banner)
 
@@ -152,12 +169,25 @@ class PulsarTest(object):
             client = pulsar.Client(self.url,
                                 use_tls=True,
                                 tls_allow_insecure_connection=True,
+                                authentication=self.authToken
                             )
 
             producer = client.create_producer(self.topic)
         except Exception as e:
             print(e)
             raise SystemExit
+
+        # Publish our topic name if we are doing topicFromTopic
+        if self.topicFromTopic:
+            print("####################### GEN TOPIC #########################")
+            try:
+                s = producer.send(self.topicFromTopic.encode('utf-8'))
+                print("Created topic " + self.topicFromTopic + " published into " + self.topic)
+                self.topic = self.topicFromTopic
+                producer = client.create_producer(self.topic)
+            except Exception as e:
+                print("Failed to send topic name: %s", e)
+                raise SystemExit
 
         if self.runForever:
             print("Running FOREVER!!!!")
@@ -191,9 +221,21 @@ class PulsarTest(object):
         client = pulsar.Client(self.url,
                             use_tls=True,
                             tls_allow_insecure_connection=True,
+                            authentication=self.authToken
                         )
 
         producer = client.create_producer(self.topic)
+
+        # Publish our topic name if we are doing topicFromTopic
+        if self.topicFromTopic:
+            try:
+                s = producer.send(self.topicFromTopic.encode('utf-8'))
+                print("Created topic " + self.topicFromTopic)
+                self.topic = self.topicFromTopic
+                producer = client.create_producer(self.topic)
+            except Exception as e:
+                print("Failed to send topic name: %s", e)
+                raise SystemExit
 
         for i in range(self.messageCount):
             if self.uniq:
@@ -220,7 +262,24 @@ class PulsarTest(object):
         client = pulsar.Client(self.url,
                             use_tls=True,
                             tls_allow_insecure_connection=True,
+                            authentication=self.authToken
                         )
+
+
+        # Grab a topic name if we are doing topicFromTopic
+        if self.topicFromTopic:
+            try:
+                consumer = client.subscribe(self.topic,
+                                    str(uuid.uuid4()),
+                                    consumer_type=pulsar.ConsumerType.Exclusive
+                                )
+                msg = consumer.receive()
+                consumer.acknowledge(msg)
+                print("Received topic " + msg.data().decode('utf-8'))
+                self.topic = str(msg.data().decode('utf-8'))
+            except Exception as e:
+                print("Failed to get topic name: %s", e)
+                raise SystemExit
 
         if not self.subscription:
             print("No subscription defined. Generating one with UUID")
@@ -264,7 +323,26 @@ class PulsarTest(object):
         client = pulsar.Client(self.url,
                             use_tls=True,
                             tls_allow_insecure_connection=True,
+                            authentication=self.authToken
                         )
+
+        # Grab a topic name if we are doing topicFromTopic
+        if self.topicFromTopic:
+            try:
+                consumer = client.subscribe(self.topic,
+                                    str(uuid.uuid4()),
+                                    consumer_type=pulsar.ConsumerType.Exclusive
+                                )
+                msg = consumer.receive()
+                consumer.acknowledge(msg)
+                self.topic = str(msg.data())
+                if self.verbosity > 1:
+                    print("Received topic " + str(msg.message_id()) + ": " + str(msg.data()))
+                elif self.verbosity == 1:
+                    print(msg.message_id())
+            except Exception as e:
+                print("Failed to get topic name: %s", e)
+                raise SystemExit
 
         if not self.subscription:
             consumer = client.subscribe(self.topic,

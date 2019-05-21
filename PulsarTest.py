@@ -123,16 +123,15 @@ class PulsarTest(object):
             print("[Config Error] Exactly one of either RUN_TIME or MESSAGE_COUNT is required")
             raise SystemExit
 
-
     def banner(self):
-        banner = """
+        message = """
             ##################################################
                 Starting test with options:
                     delay: {delay}
                     connections: {connections}
                     messages (per connection): {messageCount}
                     topic: {topic}
-                    Pulsar url: {self.url}
+                    Pulsar url: {url}
                     message size: {messageSize}
                     uniq messages: {uniq}
                     run time: {runtime}
@@ -155,9 +154,9 @@ class PulsarTest(object):
                     consumerType=self.consumerType,
                     verbosity=self.verbosity,
                     topicFromTopic=str(bool(self.topicFromTopic)),
-                    token=self.authToken
+                    token=str(self.authToken)
                 )
-        print(banner)
+        print(message)
 
 
     def genMsg(self):
@@ -256,6 +255,7 @@ class PulsarTest(object):
 
 
     def consumeByTime(self):
+        self.banner()
         startTime = time.time()
         print("Starting consumeByTime(" + str(self.runTime) +") at " + str(startTime))
 
@@ -275,6 +275,8 @@ class PulsarTest(object):
                                 )
                 msg = consumer.receive()
                 consumer.acknowledge(msg)
+                consumer.unsubscribe()
+                consumer.close()
                 print("Received topic " + msg.data().decode('utf-8'))
                 self.topic = str(msg.data().decode('utf-8'))
             except Exception as e:

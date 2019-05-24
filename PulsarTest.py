@@ -270,13 +270,12 @@ class PulsarTest(object):
         if self.topicFromTopic:
             try:
                 consumer = client.subscribe(self.topic,
-                                    str(uuid.uuid4()),
-                                    consumer_type=pulsar.ConsumerType.Exclusive
+                                    "getTopicSubscriber",
+                                    consumer_type=pulsar.ConsumerType.Shared
                                 )
                 msg = consumer.receive()
                 consumer.acknowledge(msg)
                 consumer.unsubscribe()
-                consumer.close()
                 print("Received topic " + msg.data().decode('utf-8'))
                 self.topic = str(msg.data().decode('utf-8'))
             except Exception as e:

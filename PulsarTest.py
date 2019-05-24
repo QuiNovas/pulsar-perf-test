@@ -259,15 +259,15 @@ class PulsarTest(object):
         startTime = time.time()
         print("Starting consumeByTime(" + str(self.runTime) +") at " + str(startTime))
 
-        client = pulsar.Client(self.url,
-                            use_tls=True,
-                            tls_allow_insecure_connection=True,
-                            authentication=self.authToken
-                        )
 
 
         # Grab a topic name if we are doing topicFromTopic
         if self.topicFromTopic:
+            client = pulsar.Client(self.url,
+                                use_tls=True,
+                                tls_allow_insecure_connection=True,
+                                authentication=self.authToken
+                            )
             try:
                 consumer = client.subscribe(self.topic,
                                     "getTopicSubscriber",
@@ -275,12 +275,18 @@ class PulsarTest(object):
                                 )
                 msg = consumer.receive()
                 consumer.acknowledge(msg)
-                consumer.unsubscribe()
+                client.close()
                 print("Received topic " + msg.data().decode('utf-8'))
                 self.topic = str(msg.data().decode('utf-8'))
             except Exception as e:
                 print("Failed to get topic name: %s", e)
                 raise SystemExit
+
+        client = pulsar.Client(self.url,
+                            use_tls=True,
+                            tls_allow_insecure_connection=True,
+                            authentication=self.authToken
+                        )
 
         if not self.subscription:
             print("No subscription defined. Generating one with UUID")
@@ -290,6 +296,7 @@ class PulsarTest(object):
                             )
         else:
             print("Using subscription " + self.subscription)
+
             consumer = client.subscribe(self.topic,
                                 self.subscription,
                                 consumer_type=self.consumerType

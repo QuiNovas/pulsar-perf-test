@@ -35,8 +35,12 @@ if "AUTH_TOKEN" in os.environ and os.environ["AUTH_TOKEN"]:
     config["authToken"] = os.environ["AUTH_TOKEN"]
 if "TENANT" not in os.environ:
     config["tenant"] = "public"
+else:
+    config["tenant"] = os.environ["TENANT"]
 if "NAMESPACE" not in os.environ:
     config["namespace"] = "default"
+else:
+    config["NAMESPACE"] = os.environ["NAMESPACE"]
 
 p = PulsarTest.PulsarTest(config)
 

@@ -24,6 +24,8 @@ class PulsarTest(object):
     verbosity = int()
     topicFromTopic = bool()
     authToken = str()
+    namespace = str()
+    tenant = str()
 
     def __init__(self, config):
 
@@ -65,9 +67,9 @@ class PulsarTest(object):
 
         # Topic to publish to
         if "topic" in config:
-            self.topic = config["topic"]
+            self.topic = config["tenant"] + "/" + config["namespace"] + "/" + config["topic"]
         else:
-            self.topic = 'test-topic'
+            self.topic = config["tenant"] + "/" + config["namespace"] + "/" + 'test-topic'
 
         # Total number of messages to send
         if "messageCount" in config and config["messageCount"]:
@@ -104,7 +106,7 @@ class PulsarTest(object):
             self.uniq = False
 
         if "topicFromTopic" in config:
-            self.topicFromTopic = str(uuid.uuid4())
+            self.topicFromTopic = config["tenant"] + "/" + config["namespace"] + "/" + str(uuid.uuid4())
         else:
             self.topicFromTopic = False
 
@@ -130,6 +132,8 @@ class PulsarTest(object):
                     delay: {delay}
                     connections: {connections}
                     messages (per connection): {messageCount}
+                    tenant: {tenant}
+                    namespace: {namespace}
                     topic: {topic}
                     Pulsar url: {url}
                     message size: {messageSize}
@@ -154,7 +158,9 @@ class PulsarTest(object):
                     consumerType=self.consumerType,
                     verbosity=self.verbosity,
                     topicFromTopic=str(bool(self.topicFromTopic)),
-                    token=str(self.authToken)
+                    token=str(self.authToken),
+                    namespace=self.namespace,
+                    tenant=self.tenant
                 )
         print(message)
 

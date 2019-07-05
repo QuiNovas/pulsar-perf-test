@@ -33,6 +33,10 @@ if "TOPIC_FROM_TOPIC" in os.environ and os.environ["TOPIC_FROM_TOPIC"]:
     config["topicFromTopic"] = os.environ["TOPIC_FROM_TOPIC"]
 if "AUTH_TOKEN" in os.environ and os.environ["AUTH_TOKEN"]:
     config["authToken"] = os.environ["AUTH_TOKEN"]
+if "TENANT" not in os.environ:
+    config["tenant"] = "public"
+if "NAMESPACE" not in os.environ:
+    config["namespace"] = "default"
 
 p = PulsarTest.PulsarTest(config)
 

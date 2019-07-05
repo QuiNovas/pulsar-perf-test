@@ -40,7 +40,7 @@ else:
 if "NAMESPACE" not in os.environ:
     config["namespace"] = "default"
 else:
-    config["NAMESPACE"] = os.environ["NAMESPACE"]
+    config["namespace"] = os.environ["NAMESPACE"]
 
 p = PulsarTest.PulsarTest(config)
 

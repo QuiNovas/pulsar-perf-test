@@ -343,14 +343,18 @@ class PulsarTest(object):
                     consumer.acknowledge(msg)
                 else:
                     if n > self.batchSize:
+                        print("Acking batch of " + str(self.batchSize))
                         consumer.acknowledge_cumulative(msg)
+                        print("Ack sent")
+                        n = 0
+                    else:
+                        n = n + 1
                 if self.verbosity > 1:
                     print("Received message " + str(msg.message_id()) + ": " + str(msg.data()))
                 elif self.verbosity == 1:
                     print(msg.message_id())
             except Exception as e:
                 print(e)
-            n = n + 1
             if self.delay:
                 time.sleep(self.delay/1000)
 

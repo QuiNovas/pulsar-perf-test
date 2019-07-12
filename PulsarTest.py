@@ -26,6 +26,7 @@ class PulsarTest(object):
     authToken = str()
     namespace = str()
     tenant = str()
+    batchSize = int()
 
     def __init__(self, config):
 
@@ -123,6 +124,11 @@ class PulsarTest(object):
             self.authToken = pulsar.AuthenticationToken(config["authToken"])
         else:
             self.authToken = None
+
+        if "batchSize" in config and int(config["batchSize"]) > 0:
+            self.batchSize = int(config["batchSize"])
+        else:
+            self.batchSize = False
 
         if (self.runTime and self.messageCount) or (self.runForever and self.messageCount) or (not self.runTime and not self.messageCount and not self.runForever):
             print("[Config Error] Exactly one of either RUN_TIME or MESSAGE_COUNT is required")
@@ -294,7 +300,7 @@ class PulsarTest(object):
         client = pulsar.Client(self.url,
                             use_tls=True,
                             tls_allow_insecure_connection=True,
-                            authentication=self.authToken
+                            authentication=self.authToken,
                         )
 
         if not self.subscription:
@@ -318,10 +324,15 @@ class PulsarTest(object):
             print("Running for " + str(self.runTime) + "seconds. Starting at " + str(startTime))
             endTime = self.runTime + startTime
 
+        n = 0
         while (time.time() < endTime) or (self.runForever):
             try:
                 msg = consumer.receive()
-                consumer.acknowledge(msg)
+                if self.batchSize == False:
+                    consumer.acknowledge(msg)
+                else:
+                    if n > self.batchSize:
+                        consumer.acknowledge_cumulative(msg)
                 if self.verbosity > 1:
                     print("Received message " + str(msg.message_id()) + ": " + str(msg.data()))
                 elif self.verbosity == 1:

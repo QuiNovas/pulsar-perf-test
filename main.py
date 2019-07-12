@@ -41,6 +41,8 @@ if "NAMESPACE" not in os.environ:
     config["namespace"] = "default"
 else:
     config["namespace"] = os.environ["NAMESPACE"]
+if "CONSUME_BATCH" in os.environ:
+    config["batchSize"] = os.environ["CONSUME_BATCH"]
 
 p = PulsarTest.PulsarTest(config)
 

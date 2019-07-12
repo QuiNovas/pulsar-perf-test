@@ -17,7 +17,7 @@ class PulsarTest(object):
     messageCount = int()
     topic = str()
     url = str()
-    messageSize = int()
+    messageSize = float()
     runForever = bool()
     subscription = str()
     consumerType = str()
@@ -36,9 +36,12 @@ class PulsarTest(object):
 
         if "messageSize" in config:
             # Take message size in Kb
-            self.messagSize = int(config["messageSize"]) * 1000
+            self.messagSize = int(float(config["messageSize"]) * 1000)
             if self.messageSize > 10000000:
                 print("Message cannot be greater than 10MB")
+                raise SystemExit
+            if self.messageSize < 1:
+                print("Message cannot be greater than 1 byte")
                 raise SystemExit
         else:
             # default is 10Kb

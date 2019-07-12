@@ -27,6 +27,7 @@ class PulsarTest(object):
     namespace = str()
     tenant = str()
     batchSize = int()
+    sendAsync = bool()
 
     def __init__(self, config):
 
@@ -130,6 +131,11 @@ class PulsarTest(object):
         else:
             self.batchSize = False
 
+        if "sendAsync" in config and config["sendAsync"]:
+            self.sendAsync = True
+        else:
+            self.sendAsync = False
+
         if (self.runTime and self.messageCount) or (self.runForever and self.messageCount) or (not self.runTime and not self.messageCount and not self.runForever):
             print("[Config Error] Exactly one of either RUN_TIME or MESSAGE_COUNT is required")
             raise SystemExit
@@ -177,6 +183,8 @@ class PulsarTest(object):
     def genMsg(self):
         return str(os.urandom(self.messageSize))
 
+    def sendAsyncCallback(self, res, msg):
+        pass
 
     def produceByTime(self):
         try:
@@ -218,7 +226,10 @@ class PulsarTest(object):
             else:
                 msgToSend = msg
             try:
-                s = producer.send(msgToSend.encode('utf-8'))
+                if self.sendAsync:
+                    producer.send_async(msg, self.sendAsyncCallback)
+                else:
+                    producer.send(msgToSend.encode('utf-8'))
             except Exception as e:
                 print("Failed to send message: %s", e)
             if self.delay:

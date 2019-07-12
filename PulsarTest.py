@@ -339,6 +339,7 @@ class PulsarTest(object):
                     print(msg.message_id())
             except Exception as e:
                 print(e)
+            n = n + 1
             if self.delay:
                 time.sleep(self.delay/1000)
 

@@ -6,7 +6,7 @@ import PulsarTest
 config = {}
 
 if "MESSAGE_SIZE" in os.environ:
-    config["msgSize"] = int(os.environ["MESSAGE_SIZE"])
+    config["msgSize"] = float(os.environ["MESSAGE_SIZE"])
 if "TOPIC" in os.environ:
     config["topic"] = os.environ["TOPIC"]
 if "MESSAGE_COUNT" in os.environ and os.environ["MESSAGE_COUNT"]:

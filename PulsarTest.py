@@ -180,8 +180,10 @@ class PulsarTest(object):
         print(message)
 
 
-    def genMsg(self):
-        return str(os.urandom(self.messageSize))
+def genMsg(self):
+    """Generate a random string of fixed length """
+    chars = string.ascii_letters + string.punctuation + string.digits
+    return ''.join(random.choice(letters) for i in range(self.msgSize))
 
     def sendAsyncCallback(self, res, msg):
         pass

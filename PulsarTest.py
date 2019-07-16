@@ -40,12 +40,12 @@ class PulsarTest(object):
 
         if "messageSize" in config:
             # Take message size in Kb
-            self.messagSize = int(float(config["messageSize"]) * 1000)
+            self.messageSize = int(config["messageSize"] * 1000)
             if self.messageSize > 10000000:
                 print("Message cannot be greater than 10MB")
                 raise SystemExit
             if self.messageSize < 1:
-                print("Message cannot be greater than 1 byte")
+                print("Message cannot be less than 1 byte")
                 raise SystemExit
         else:
             # default is 10Kb
@@ -184,8 +184,7 @@ class PulsarTest(object):
 
     def genMsg(self):
         """Generate a random string of fixed length """
-        chars = string.ascii_letters + string.punctuation + string.digits
-        return ''.join(random.choice(chars) for i in range(self.messageSize))
+        return os.urandom(self.messageSize)
 
     def sendAsyncCallback(self, res, msg):
         pass
@@ -210,7 +209,15 @@ class PulsarTest(object):
                 s = producer.send(self.topicFromTopic.encode('utf-8'))
                 print("Created topic " + self.topicFromTopic + " published into " + self.topic)
                 self.topic = self.topicFromTopic
-                producer = client.create_producer(self.topic)
+                if self.sendAsync:
+                  producer = client.create_producer(
+                               self.topic,
+                               block_if_queue_full=True,
+                               batching_enabled=True,
+                               batching_max_publish_delay_ms=100
+                             )
+                else:
+                  producer = client.create_producer(self.topic)
             except Exception as e:
                 print("Failed to send topic name: %s", e)
                 raise SystemExit
@@ -226,14 +233,14 @@ class PulsarTest(object):
 
         while (time.time() < endTime) or (self.runForever):
             if self.uniq:
-                msgToSend = msg + str(time.time())
+                msgToSend = msg + str(time.time()).encode()
             else:
                 msgToSend = msg
             try:
                 if self.sendAsync:
-                    producer.send_async(msgToSend.encode('utf-8'), self.sendAsyncCallback)
+                    producer.send_async(msgToSend, self.sendAsyncCallback)
                 else:
-                    producer.send(msgToSend.encode('utf-8'))
+                    producer.send(msgToSend)
             except Exception as e:
                 print("Failed to send message: %s", e)
             if self.delay:
@@ -306,8 +313,8 @@ class PulsarTest(object):
                 msg = consumer.receive()
                 consumer.acknowledge(msg)
                 client.close()
-                print("Received topic " + msg.data().decode('utf-8'))
-                self.topic = str(msg.data().decode('utf-8'))
+                print("Received topic " + msg.data().decode())
+                self.topic = str(msg.data().decode())
             except Exception as e:
                 print("Failed to get topic name: %s", e)
                 raise SystemExit
@@ -347,9 +354,9 @@ class PulsarTest(object):
                     consumer.acknowledge(msg)
                 else:
                     if n > self.batchSize:
-                        print("Acking batch of " + str(self.batchSize))
+                        #print("Acking batch of " + str(self.batchSize))
                         consumer.acknowledge_cumulative(msg)
-                        print("Ack sent")
+                        #print("Ack sent")
                         n = 0
                     else:
                         n = n + 1
@@ -459,3 +466,4 @@ class PulsarTest(object):
         for x in threads:
             x.join()
         print("All threads finished")
+

@@ -231,7 +231,7 @@ class PulsarTest(object):
                 msgToSend = msg
             try:
                 if self.sendAsync:
-                    producer.send_async(msg, self.sendAsyncCallback)
+                    producer.send_async(msgToSend.encode('utf-8'), self.sendAsyncCallback)
                 else:
                     producer.send(msgToSend.encode('utf-8'))
             except Exception as e:

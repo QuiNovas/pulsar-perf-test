@@ -185,7 +185,7 @@ class PulsarTest(object):
     def genMsg(self):
         """Generate a random string of fixed length """
         chars = string.ascii_letters + string.punctuation + string.digits
-        return ''.join(random.choice(letters) for i in range(self.messageSize))
+        return ''.join(random.choice(chars) for i in range(self.messageSize))
 
     def sendAsyncCallback(self, res, msg):
         pass
